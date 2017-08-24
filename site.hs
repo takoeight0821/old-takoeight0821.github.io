@@ -66,3 +66,17 @@ postCtx =
     dateField "date" "%B %e, %Y" `mappend`
     defaultContext
 
+config :: Configuration
+config = defaultConfiguration
+  { deployCommand = "git checkout source" `mappend`
+                    "&& stack exec blog rebuild" `mappend`
+                    "&& git checkout master" `mappend`
+                    "&& rsync -a --filter='P _site/'" `mappend`
+                    " --filter='P _cache/' --filter='P .git/'" `mappend`
+                    " --filter='P .stack-work' --filter='P .gitignore'" `mappend`
+                    " --delete-excluded _site/ ." `mappend`
+                    "&& cp -a _site/. ." `mappend`
+                    "&& git add -A" `mappend`
+                    "&& git commit -m 'Publish'" `mappend`
+                    "&& git checkout source"
+  }
