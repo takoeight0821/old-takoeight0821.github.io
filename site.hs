@@ -6,7 +6,7 @@ import           Hakyll
 
 --------------------------------------------------------------------------------
 main :: IO ()
-main = hakyll $ do
+main = hakyllWith config $ do
     match "images/*" $ do
         route   idRoute
         compile copyFileCompiler
@@ -78,5 +78,6 @@ config = defaultConfiguration
                     "&& cp -a _site/. ." `mappend`
                     "&& git add -A" `mappend`
                     "&& git commit -m 'Publish'" `mappend`
+                    "&& git push origin master:master" `mappend`
                     "&& git checkout source"
   }
