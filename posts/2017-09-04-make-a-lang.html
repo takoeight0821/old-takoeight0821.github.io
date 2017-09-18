@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>こうののブログ - プログラミング言語処理系を作りたい</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">こうののブログ</a>
+            </div>
+            <div id="navigation">
+                <a href="../">Home</a>
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../archive.html">Archive</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h1>プログラミング言語処理系を作りたい</h1>
+
+            <div class="info">
+    Posted on September  4, 2017
+    
+</div>
+
+<p>大体タイトルの通りです。 <a href="https://github.com/takoeight0821/malgo" class="uri">https://github.com/takoeight0821/malgo</a>で雑に作っていたけど、雑すぎて行き詰ったので細かい所を考える。</p>
+<h2 id="やること">やること</h2>
+<ol style="list-style-type: decimal">
+<li>途中まで読んで投げている「最新コンパイラ構成技法」を最後まで読む&amp;実装する</li>
+</ol>
+<p>虎本では書き換え可能な変数を使うことを前提とした解説も多いので、HaskellよりSMLやOCamlの方が楽そう。</p>
+<p>字句解析や構文解析はわりと魔境なので、S式でやっていく。 queen.tigはこんな感じ</p>
+<div class="sourceCode"><pre class="sourceCode lisp"><code class="sourceCode commonlisp"><span class="co">; 8クイーン問題を解くプログラム</span>
+(<span class="kw">let</span> (
+  (var N <span class="dv">8</span>)
+  (<span class="kw">type</span> intArray (<span class="kw">array</span> int))
+  (var row (intArray N <span class="dv">0</span>))
+  (var col (intArray N <span class="dv">0</span>))
+  (var diag1 (intArray (<span class="op">+</span> N (<span class="op">-</span> N <span class="dv">1</span>)) <span class="dv">0</span>))
+  (var diag2 (intArray (<span class="op">+</span> N (<span class="op">-</span> N <span class="dv">1</span>)) <span class="dv">0</span>))
+
+  (<span class="kw">function</span> (printboard)
+    (for (i <span class="dv">0</span> (<span class="op">-</span> N <span class="dv">1</span>))
+      (for (j <span class="dv">0</span> (<span class="op">-</span> N <span class="dv">1</span>))
+        (<span class="kw">print</span> (<span class="kw">if</span> (<span class="op">=</span> (<span class="kw">aref</span> col i) j)
+                   <span class="st">&quot; O&quot;</span>
+                   <span class="st">&quot; .&quot;</span>)))
+      (<span class="kw">print</span> <span class="st">&quot;</span>\n<span class="st">&quot;</span>))
+    (<span class="kw">print</span> <span class="st">&quot;</span>\n<span class="st">&quot;</span>))
+  (<span class="kw">function</span> (try c:int)
+    (<span class="kw">if</span> (<span class="op">=</span> c N)
+        (printboard)
+        (for (r <span class="dv">0</span> (<span class="op">-</span> N <span class="dv">1</span>))
+          (<span class="kw">if</span> (<span class="kw">and</span> (<span class="op">=</span> row[r] <span class="dv">0</span>) (<span class="op">=</span> diag1[(<span class="op">+</span> r c)] <span class="dv">0</span>) (<span class="op">=</span> diag2[(<span class="op">-</span> (<span class="op">+</span> r <span class="dv">7</span>) c)] <span class="dv">0</span>))
+              (<span class="kw">do</span> (<span class="kw">set</span> row[r] <span class="dv">1</span>) (<span class="kw">set</span> diag1[(<span class="op">+</span> r c)] <span class="dv">1</span>) (<span class="kw">set</span> diag2[(<span class="op">-</span> (<span class="op">+</span> r <span class="dv">7</span>) c)] <span class="dv">1</span>)
+                  (<span class="kw">set</span> col[c] r)
+                  (try (<span class="op">+</span> c <span class="dv">1</span>))
+                  (<span class="kw">set</span> row[r] <span class="dv">0</span>) (<span class="kw">set</span> diag1[(<span class="op">+</span> r c)] <span class="dv">1</span>) (<span class="kw">set</span> diag2[(<span class="op">-</span> (<span class="op">+</span> r <span class="dv">7</span>) c)] <span class="dv">0</span>))))))
+  )
+  (try <span class="dv">0</span>))</code></pre></div>
+<p>代入(set)周りはCommon Lispのsetfを参考にした。これは後々変えるかも。(:=にするなど)</p>
+<p>merge.tigはこんな感じ</p>
+<div class="sourceCode"><pre class="sourceCode lisp"><code class="sourceCode commonlisp">(<span class="kw">let</span> ((<span class="kw">type</span> any {any:int})
+      (var buffer (getchar))
+      (<span class="kw">function</span> (readint:int any:any)
+        (<span class="kw">let</span> ((var i <span class="dv">0</span>)
+              (<span class="kw">function</span> (isdigit:int s:string)
+                (<span class="kw">and</span> (<span class="op">&gt;=</span> (ord buffer) (ord <span class="st">&quot;0&quot;</span>)) (<span class="op">&lt;=</span> (ord buffer) (ord <span class="st">&quot;9&quot;</span>)))))
+          (while (<span class="kw">or</span> (<span class="op">=</span> buffer <span class="st">&quot; &quot;</span>) (<span class="op">=</span> buffer <span class="st">&quot;</span>\n<span class="st">&quot;</span>))
+            (<span class="kw">set</span> buffer (getchar)))
+          (<span class="kw">set</span> any.any (isdigit buffer))
+          (while (isdigit buffer)
+            (<span class="kw">set</span> i (<span class="op">+</span> (<span class="op">*</span> i <span class="dv">10</span>) (<span class="op">-</span> (ord buffer) (ord <span class="st">&quot;0&quot;</span>))))
+            (<span class="kw">set</span> buffer (getchar)))))
+      (<span class="kw">type</span> <span class="kw">list</span> {first:int rest:list})
+      (funtion (readlist:list)
+        (<span class="kw">let</span> ((var any any{any <span class="dv">0</span>})
+              (var i (readint any)))
+          (<span class="kw">if</span> any.any
+            <span class="kw">list</span>{<span class="kw">first</span> i, <span class="kw">rest</span> (readlist)}
+            (<span class="kw">do</span> (<span class="kw">set</span> buffer (getchar))
+                <span class="kw">nil</span>))))
+<span class="co">;; ...などなど</span></code></pre></div>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+            <a href="https://takoeight0821.github.io/">
+              <img src="https://ga-beacon.appspot.com/UA-73103092-2/takoeight0821.github.io?pixel" />
+            </a>
+        </div>
+    </body>
+</html>
