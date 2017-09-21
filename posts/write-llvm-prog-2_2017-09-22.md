@@ -121,8 +121,9 @@ LLVM IRではレジスタへの代入は一度しかできません。
 `store i32 %1, i32* %result`{.llvm}は、`%result`{.llvm}の指す値を`%1`{.llvm}にする命令です。
 
 `else:`{.llvm}でx<0が偽の場合の処理を行います。
-といっても、`%result`{.llvm}の指す値を`%0`{.llvm}にしているだけです。<br>
-`%2 = load i32, i32* %result`{.llvm}で`%result`{.llvm}から結果を読み出し、`ret i32 %2`{.llvm}で返ります。
+といっても、`%result`{.llvm}の指す値を`%0`{.llvm}にしているだけです。
+
+`end:`{.llvm}では、`%2 = load i32, i32* %result`{.llvm}で`%result`{.llvm}から返り値を取得しています。
 
 abs関数をlib.llに追記して、実際に使ってみましょう。
 
