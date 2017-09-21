@@ -1,6 +1,6 @@
 ---
 title: LLVM IRでプログラムを書く 絶対値関数編
-date: 2017-09-22
+date: 2017-09-21
 tags: llvm
 ---
 
