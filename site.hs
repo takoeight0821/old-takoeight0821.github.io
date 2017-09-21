@@ -21,6 +21,14 @@ main = hakyllWith config $ do
             >>= loadAndApplyTemplate "templates/default.html" defaultContext
             >>= relativizeUrls
 
+    match "posts/*/*/*" $ do
+        route $ setExtension "html"
+        compile $ pandocCompiler
+            >>= loadAndApplyTemplate "templates/post.html"    postCtx
+            >>= saveSnapshot "content"
+            >>= loadAndApplyTemplate "templates/default.html" postCtx
+            >>= relativizeUrls
+
     match "posts/*" $ do
         route $ setExtension "html"
         compile $ pandocCompiler
@@ -31,7 +39,9 @@ main = hakyllWith config $ do
     create ["archive.html"] $ do
         route idRoute
         compile $ do
-            posts <- recentFirst =<< loadAll "posts/*"
+            posts1 <- recentFirst =<< loadAll "posts/*"
+            posts2 <- recentFirst =<< loadAll "posts/*/*/*"
+            let posts = posts2 ++ posts1
             let archiveCtx =
                     listField "posts" postCtx (return posts) `mappend`
                     constField "title" "Archives"            `mappend`
@@ -42,11 +52,12 @@ main = hakyllWith config $ do
                 >>= loadAndApplyTemplate "templates/default.html" archiveCtx
                 >>= relativizeUrls
 
-
     match "index.html" $ do
         route idRoute
         compile $ do
-            posts <- recentFirst =<< loadAll "posts/*"
+            posts1 <- recentFirst =<< loadAll "posts/*"
+            posts2 <- recentFirst =<< loadAll "posts/*/*/*"
+            let posts = posts2 ++ posts1
             let indexCtx =
                     listField "posts" postCtx (return posts) `mappend`
                     constField "title" "Home"                `mappend`
@@ -59,12 +70,28 @@ main = hakyllWith config $ do
 
     match "templates/*" $ compile templateCompiler
 
+    create ["atom.xml"] $ do
+      route   idRoute
+      compile $ do
+        let feedCtx =
+              postCtx                 `mappend`
+              bodyField "description"
+        posts <- fmap (take 10) . recentFirst =<< loadAllSnapshots "posts/*/*/*" "content"
+        renderAtom myFeedConfiguration feedCtx posts
 
 --------------------------------------------------------------------------------
 postCtx :: Context String
 postCtx =
     dateField "date" "%B %e, %Y" `mappend`
     defaultContext
+
+myFeedConfiguration = FeedConfiguration
+  { feedTitle = "こうののブログ"
+  , feedDescription = "こうののブログです"
+  , feedAuthorName = "takoeight0821"
+  , feedAuthorEmail = "takohati0821@gmail.com"
+  , feedRoot = "https://takoeight0821.github.io"
+  }
 
 config :: Configuration
 config = defaultConfiguration
