@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>こうののブログ - LLVM IRでプログラムを書く 絶対値関数編</title>
+        <link rel="stylesheet" type="text/css" href="../../../css/default.css" />
+        <link rel="stylesheet" type="text/css" href="../../../css/syntax.css" />
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../../../">こうののブログ</a>
+            </div>
+            <div id="navigation">
+                <a href="../../../">Home</a>
+                <a href="../../../about.html">About</a>
+                <a href="../../../contact.html">Contact</a>
+                <a href="../../../archive.html">Archive</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h1>LLVM IRでプログラムを書く 絶対値関数編</h1>
+
+            <div class="info">
+    Posted on September 21, 2017
+    
+</div>
+
+<p>LLVM IRで絶対値関数を書く話です。<a href="./2017-09-21-write-llvm-prog.html">前回の記事</a>の続きです。</p>
+<h2 id="恒等関数">恒等関数</h2>
+<p>まず、与えられた整数をそのままオウム返しするだけの関数idを実装します。 C言語で書くと以下のようになります。</p>
+<div class="sourceCode"><pre class="sourceCode c"><code class="sourceCode c"><span class="dt">int</span> id(<span class="dt">int</span> x) {
+  <span class="cf">return</span> x;
+}</code></pre></div>
+<p>関数の引数はレジスタ<code class="sourceCode llvm"><span class="fu">%0</span></code>から順番に代入されます。 idは引数が1つなので、<code class="sourceCode llvm"><span class="fu">%0</span></code>の値をそのまま返します。</p>
+<p>以下のコードをlib.llに保存します。</p>
+<div class="sourceCode" id="lib.ll"><pre class="sourceCode llvm"><code class="sourceCode llvm"><span class="kw">define</span> <span class="dt">i32</span> <span class="fu">@id</span>(<span class="dt">i32</span>) {
+  <span class="kw">ret</span> <span class="dt">i32</span> <span class="fu">%0</span>
+}</code></pre></div>
+<p>実際に使ってみましょう。以下のコードをmain.cに保存します。</p>
+<div class="sourceCode" id="main.c"><pre class="sourceCode c"><code class="sourceCode c"><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span>
+
+<span class="dt">int</span> id(<span class="dt">int</span> x);
+
+<span class="dt">int</span> main(<span class="dt">void</span>) {
+  printf(<span class="st">&quot;%d</span><span class="sc">\n</span><span class="st">&quot;</span>, id(<span class="dv">42</span>));
+}</code></pre></div>
+<p>コンパイルは以下のように行います。</p>
+<div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash">$ <span class="fu">clang</span> main.c lib.ll
+$ <span class="ex">./a.out</span>
+<span class="ex">42</span></code></pre></div>
+<h2 id="絶対値関数">絶対値関数</h2>
+<p>絶対値関数をCで書くと以下のようになります。</p>
+<div class="sourceCode"><pre class="sourceCode c"><code class="sourceCode c"><span class="dt">int</span> abs(<span class="dt">int</span> x) {
+  <span class="cf">if</span> (x &lt; <span class="dv">0</span>) {
+    <span class="cf">return</span> -x;
+  } <span class="cf">else</span> {
+    <span class="cf">return</span> x;
+  }
+}</code></pre></div>
+<p>これをLLVM IRで書くと以下のようになります。</p>
+<div class="sourceCode"><pre class="sourceCode llvm"><code class="sourceCode llvm"><span class="kw">define</span> <span class="dt">i32</span> <span class="fu">@abs</span>(<span class="dt">i32</span>) {
+<span class="fu">entry:</span>
+  <span class="fu">%cond</span> = <span class="kw">icmp</span> <span class="kw">slt</span> <span class="dt">i32</span> <span class="fu">%0</span>, <span class="dv">0</span>
+  <span class="fu">%result</span> = <span class="kw">alloca</span> <span class="dt">i32</span>
+
+  <span class="kw">br</span> <span class="dt">i1</span> <span class="fu">%cond</span>, <span class="dt">label</span> <span class="fu">%then</span>, <span class="dt">label</span> <span class="fu">%else</span>
+
+<span class="fu">then:</span>
+  <span class="fu">%1</span> = <span class="kw">sub</span> <span class="dt">i32</span> <span class="dv">0</span>, <span class="fu">%0</span>
+  <span class="kw">store</span> <span class="dt">i32</span> <span class="fu">%1</span>, <span class="dt">i32</span>* <span class="fu">%result</span>
+  <span class="kw">br</span> <span class="dt">label</span> <span class="fu">%end</span>
+
+<span class="fu">else:</span>
+  <span class="kw">store</span> <span class="dt">i32</span> <span class="fu">%0</span>, <span class="dt">i32</span>* <span class="fu">%result</span>
+  <span class="kw">br</span> <span class="dt">label</span> <span class="fu">%end</span>
+
+<span class="fu">end:</span>
+  <span class="fu">%2</span> = <span class="kw">load</span> <span class="dt">i32</span>, <span class="dt">i32</span>* <span class="fu">%result</span>
+  <span class="kw">ret</span> <span class="dt">i32</span> <span class="fu">%2</span>
+}</code></pre></div>
+<p>1つずつ追っていきましょう。</p>
+<p>まず最初の<code class="sourceCode llvm"><span class="fu">entry:</span></code>です。 これはラベルと呼ばれ、条件分岐やループの際のジャンプ先として使います。<br> 関数の最初にラベルを書かなかった場合、暗黙的に無名のラベルが挿入されます。 例えば、引数が2つの関数の場合、<code class="sourceCode llvm"><span class="fu">%0</span></code>, <code class="sourceCode llvm"><span class="fu">%1</span></code>が引数に使われ、<code class="sourceCode llvm"><span class="fu">%2</span></code>がこの無名のラベルに使われます。</p>
+<p>次に、<code class="sourceCode llvm"><span class="fu">%cond</span> = <span class="kw">icmp</span> <span class="kw">slt</span> <span class="dt">i32</span> <span class="fu">%0</span>, <span class="dv">0</span></code>です。<br> <code class="sourceCode llvm"><span class="kw">icmp</span></code>は整数比較を行う命令です。<code class="sourceCode llvm"><span class="kw">slt</span></code>は比較条件を表します。 以下に比較条件の一覧を示します。</p>
+<ol style="list-style-type: decimal">
+<li>eq: 等値</li>
+<li>ne: 等値でない</li>
+<li>ugt: 符号なし整数の’&gt;’</li>
+<li>uge: 符号なし整数の’&gt;=’</li>
+<li>ult: 符号なし整数の’&lt;’</li>
+<li>sle: 符号あり整数の’&lt;=’</li>
+<li>sgt: 符号あり整数の’&gt;’</li>
+<li>sge: 符号あり整数の’&gt;=’</li>
+<li>slt: 符号あり整数の’&lt;’</li>
+<li>sle: 符号あり整数の’&lt;=’</li>
+</ol>
+<p><code class="sourceCode llvm"><span class="fu">%result</span> = <span class="kw">alloca</span> <span class="dt">i32</span></code>では、結果を保存するためのポインタを用意しています。 LLVM IRではレジスタへの代入は一度しかできません。 複数回代入する可能性のある変数は、このようにポインタを用意して扱います。</p>
+<p><code class="sourceCode llvm"><span class="kw">br</span> <span class="dt">i1</span> <span class="fu">%cond</span>, <span class="dt">label</span> <span class="fu">%then</span>, <span class="dt">label</span> <span class="fu">%else</span></code>はif文の条件分岐に相当します。</p>
+<p><code class="sourceCode llvm"><span class="fu">then:</span></code>でx&lt;0が真の場合の処理を行います。<br> <code class="sourceCode llvm"><span class="fu">%1</span> = <span class="kw">sub</span> <span class="dt">i32</span> <span class="dv">0</span>, <span class="fu">%0</span></code>では、無名レジスタを使用しています。 無名レジスタは、引数などに使われる、識別子が数字のみのレジスタです。 これは連番になっている必要があります。<br> <code class="sourceCode llvm"><span class="kw">store</span> <span class="dt">i32</span> <span class="fu">%1</span>, <span class="dt">i32</span>* <span class="fu">%result</span></code>は、<code class="sourceCode llvm"><span class="fu">%result</span></code>の指す値を<code class="sourceCode llvm"><span class="fu">%1</span></code>にする命令です。</p>
+<p><code class="sourceCode llvm"><span class="fu">else:</span></code>でx&lt;0が偽の場合の処理を行います。 といっても、<code class="sourceCode llvm"><span class="fu">%result</span></code>の指す値を<code class="sourceCode llvm"><span class="fu">%0</span></code>にしているだけです。</p>
+<p><code class="sourceCode llvm"><span class="fu">end:</span></code>では、<code class="sourceCode llvm"><span class="fu">%2</span> = <span class="kw">load</span> <span class="dt">i32</span>, <span class="dt">i32</span>* <span class="fu">%result</span></code>で<code class="sourceCode llvm"><span class="fu">%result</span></code>から返り値を取得しています。</p>
+<p>abs関数をlib.llに追記して、実際に使ってみましょう。</p>
+<p>lib.llの全体を以下に示します。</p>
+<div class="sourceCode" id="lib.ll"><pre class="sourceCode llvm"><code class="sourceCode llvm"><span class="kw">define</span> <span class="dt">i32</span> <span class="fu">@id</span>(<span class="dt">i32</span>) {
+  <span class="kw">ret</span> <span class="dt">i32</span> <span class="fu">%0</span>
+}
+
+<span class="kw">define</span> <span class="dt">i32</span> <span class="fu">@abs</span>(<span class="dt">i32</span>) {
+<span class="fu">entry:</span>
+  <span class="fu">%cond</span> = <span class="kw">icmp</span> <span class="kw">slt</span> <span class="dt">i32</span> <span class="fu">%0</span>, <span class="dv">0</span>
+
+  <span class="kw">br</span> <span class="dt">i1</span> <span class="fu">%cond</span>, <span class="dt">label</span> <span class="fu">%then</span>, <span class="dt">label</span> <span class="fu">%else</span>
+
+<span class="fu">then:</span>
+  <span class="fu">%result</span> = <span class="kw">sub</span> <span class="dt">i32</span> <span class="dv">0</span>, <span class="fu">%0</span>
+  <span class="kw">br</span> <span class="dt">label</span> <span class="fu">%end</span>
+
+<span class="fu">else:</span>
+  <span class="fu">%result</span> = <span class="kw">add</span> <span class="dt">i32</span> <span class="dv">0</span>, <span class="fu">%0</span>
+  <span class="kw">br</span> <span class="dt">label</span> <span class="fu">%end</span>
+
+<span class="fu">end:</span>
+  <span class="kw">ret</span> <span class="dt">i32</span> <span class="fu">%result</span>
+}</code></pre></div>
+<p>main.cの全体を以下に示します。</p>
+<div class="sourceCode" id="main.c"><pre class="sourceCode c"><code class="sourceCode c"><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span>
+
+<span class="dt">int</span> id(<span class="dt">int</span> x);
+<span class="dt">int</span> abs(<span class="dt">int</span> x);
+
+<span class="dt">int</span> main(<span class="dt">void</span>) {
+  printf(<span class="st">&quot;%d</span><span class="sc">\n</span><span class="st">&quot;</span>, id(<span class="dv">42</span>));
+  printf(<span class="st">&quot;%d</span><span class="sc">\n</span><span class="st">&quot;</span>, abs(-<span class="dv">42</span>));
+}</code></pre></div>
+<p>実行結果は以下のようになります。</p>
+<div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash">$ <span class="fu">clang</span> main.c lib.ll
+$ <span class="ex">./a.out</span>
+<span class="ex">42</span>
+<span class="ex">42</span></code></pre></div>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+            <a href="https://takoeight0821.github.io/">
+              <img src="https://ga-beacon.appspot.com/UA-73103092-2/takoeight0821.github.io?pixel" />
+            </a>
+        </div>
+    </body>
+</html>
