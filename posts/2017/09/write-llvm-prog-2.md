@@ -138,19 +138,22 @@ define i32 @id(i32) {
 define i32 @abs(i32) {
 entry:
   %cond = icmp slt i32 %0, 0
+  %result = alloca i32
 
   br i1 %cond, label %then, label %else
 
 then:
-  %result = sub i32 0, %0
+  %1 = sub i32 0, %0
+  store i32 %1, i32* %result
   br label %end
 
 else:
-  %result = add i32 0, %0
+  store i32 %0, i32* %result
   br label %end
 
 end:
-  ret i32 %result
+  %2 = load i32, i32* %result
+  ret i32 %2
 }
 ```
 
