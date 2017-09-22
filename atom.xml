@@ -102,19 +102,22 @@ $ <span class="ex">./a.out</span>
 <span class="kw">define</span> <span class="dt">i32</span> <span class="fu">@abs</span>(<span class="dt">i32</span>) {
 <span class="fu">entry:</span>
   <span class="fu">%cond</span> = <span class="kw">icmp</span> <span class="kw">slt</span> <span class="dt">i32</span> <span class="fu">%0</span>, <span class="dv">0</span>
+  <span class="fu">%result</span> = <span class="kw">alloca</span> <span class="dt">i32</span>
 
   <span class="kw">br</span> <span class="dt">i1</span> <span class="fu">%cond</span>, <span class="dt">label</span> <span class="fu">%then</span>, <span class="dt">label</span> <span class="fu">%else</span>
 
 <span class="fu">then:</span>
-  <span class="fu">%result</span> = <span class="kw">sub</span> <span class="dt">i32</span> <span class="dv">0</span>, <span class="fu">%0</span>
+  <span class="fu">%1</span> = <span class="kw">sub</span> <span class="dt">i32</span> <span class="dv">0</span>, <span class="fu">%0</span>
+  <span class="kw">store</span> <span class="dt">i32</span> <span class="fu">%1</span>, <span class="dt">i32</span>* <span class="fu">%result</span>
   <span class="kw">br</span> <span class="dt">label</span> <span class="fu">%end</span>
 
 <span class="fu">else:</span>
-  <span class="fu">%result</span> = <span class="kw">add</span> <span class="dt">i32</span> <span class="dv">0</span>, <span class="fu">%0</span>
+  <span class="kw">store</span> <span class="dt">i32</span> <span class="fu">%0</span>, <span class="dt">i32</span>* <span class="fu">%result</span>
   <span class="kw">br</span> <span class="dt">label</span> <span class="fu">%end</span>
 
 <span class="fu">end:</span>
-  <span class="kw">ret</span> <span class="dt">i32</span> <span class="fu">%result</span>
+  <span class="fu">%2</span> = <span class="kw">load</span> <span class="dt">i32</span>, <span class="dt">i32</span>* <span class="fu">%result</span>
+  <span class="kw">ret</span> <span class="dt">i32</span> <span class="fu">%2</span>
 }</code></pre></div>
 <p>main.cの全体を以下に示します。</p>
 <div class="sourceCode" id="main.c"><pre class="sourceCode c"><code class="sourceCode c"><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span>
