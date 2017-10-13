@@ -8,8 +8,28 @@
         <name>takoeight0821</name>
         <email>takohati0821@gmail.com</email>
     </author>
-    <updated>2017-09-21T00:00:00Z</updated>
+    <updated>2017-10-13T00:00:00Z</updated>
     <entry>
+    <title>アセンブラ超入門</title>
+    <link href="https://takoeight0821.github.io/posts/2017/10/assembly-tut.html" />
+    <id>https://takoeight0821.github.io/posts/2017/10/assembly-tut.html</id>
+    <published>2017-10-13T00:00:00Z</published>
+    <updated>2017-10-13T00:00:00Z</updated>
+    <summary type="html"><![CDATA[<div class="info">
+    Posted on October 13, 2017
+    
+</div>
+
+<p>学内勉強会で発表した資料です</p>
+<p><a href="https://www.slideshare.net/YuyaKono/ss-80762348">資料</a></p>
+<p>使用したプログラムはこちらです</p>
+<ul>
+<li><a href="https://gist.github.com/takoeight0821/0eb1539633eeaf4660b5e7a3df6e0585">easy.c stringsで分かるもの</a></li>
+<li><a href="https://gist.github.com/takoeight0821/5997efdb206691706df43fffa874f8e7">hard.c objdumpで分かるもの</a></li>
+</ul>
+]]></summary>
+</entry>
+<entry>
     <title>LLVM IRでプログラムを書く 絶対値関数編</title>
     <link href="https://takoeight0821.github.io/posts/2017/09/write-llvm-prog-2.html" />
     <id>https://takoeight0821.github.io/posts/2017/09/write-llvm-prog-2.html</id>
