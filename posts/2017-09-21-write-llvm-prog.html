@@ -92,7 +92,7 @@ return命令は<code>ret &lt;返り値の型&gt; &lt;返り値&gt;</code>にな�
 ポインタ値から値を取り出すには<code>getelementptr &lt;指している値の型&gt;, &lt;指している値の型&gt;* &lt;ポインタ値&gt;, &lt;インデックス1&gt;, &lt;インデックス2&gt;, …</code>を使います。 これはCで書くと、<code>&amp;&lt;ポインタ値&gt;[&lt;インデックス1&gt;][&lt;インデックス2&gt;]…</code>のような意味です。
 </p>
 <p>
-先ほどの擬似コード<code>char** hello = &amp;“Hello world”;</code>から’H’へのポインタを取り出すことは、<code>&amp;hello[0][0]</code>と書けばいいので、<code><span class="citation">@hello</span></code>からi8*型のポインタを取り出すコードは以下のようになります。
+先ほどの擬似コード<code>char** hello = &amp;“Hello world”;</code>から’H’へのポインタを取り出すことは、<code>&amp;hello[0][0]</code>と書けばいいので、<code><span class="citation" data-cites="hello">@hello</span></code>からi8*型のポインタを取り出すコードは以下のようになります。
 </p>
 <div class="sourceCode">
 <pre class="sourceCode llvm"><code class="sourceCode llvm"><span class="kw">define</span> <span class="dt">i32</span> <span class="fu">@main</span>() {

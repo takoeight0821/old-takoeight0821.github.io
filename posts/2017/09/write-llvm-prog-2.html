@@ -32,60 +32,60 @@
 <p>LLVM IRで絶対値関数を書く話です。<a href="./2017-09-21-write-llvm-prog.html">前回の記事</a>の続きです。</p>
 <h2 id="恒等関数">恒等関数</h2>
 <p>まず、与えられた整数をそのままオウム返しするだけの関数idを実装します。 C言語で書くと以下のようになります。</p>
-<div class="sourceCode"><pre class="sourceCode c"><code class="sourceCode c"><span class="dt">int</span> id(<span class="dt">int</span> x) {
-  <span class="cf">return</span> x;
-}</code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="dt">int</span> id(<span class="dt">int</span> x) {</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">  <span class="cf">return</span> x;</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">}</a></code></pre></div>
 <p>関数の引数はレジスタ<code class="sourceCode llvm"><span class="fu">%0</span></code>から順番に代入されます。 idは引数が1つなので、<code class="sourceCode llvm"><span class="fu">%0</span></code>の値をそのまま返します。</p>
 <p>以下のコードをlib.llに保存します。</p>
-<div class="sourceCode" id="lib.ll"><pre class="sourceCode llvm"><code class="sourceCode llvm"><span class="kw">define</span> <span class="dt">i32</span> <span class="fu">@id</span>(<span class="dt">i32</span>) {
-  <span class="kw">ret</span> <span class="dt">i32</span> <span class="fu">%0</span>
-}</code></pre></div>
+<div class="sourceCode" id="lib.ll"><pre class="sourceCode llvm"><code class="sourceCode llvm"><a class="sourceLine" id="lib.ll-1" data-line-number="1"><span class="kw">define</span> <span class="dt">i32</span> <span class="fu">@id</span>(<span class="dt">i32</span>) {</a>
+<a class="sourceLine" id="lib.ll-2" data-line-number="2">  <span class="kw">ret</span> <span class="dt">i32</span> <span class="fu">%0</span></a>
+<a class="sourceLine" id="lib.ll-3" data-line-number="3">}</a></code></pre></div>
 <p>実際に使ってみましょう。以下のコードをmain.cに保存します。</p>
-<div class="sourceCode" id="main.c"><pre class="sourceCode c"><code class="sourceCode c"><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span>
-
-<span class="dt">int</span> id(<span class="dt">int</span> x);
-
-<span class="dt">int</span> main(<span class="dt">void</span>) {
-  printf(<span class="st">&quot;%d</span><span class="sc">\n</span><span class="st">&quot;</span>, id(<span class="dv">42</span>));
-}</code></pre></div>
+<div class="sourceCode" id="main.c"><pre class="sourceCode c"><code class="sourceCode c"><a class="sourceLine" id="main.c-1" data-line-number="1"><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></a>
+<a class="sourceLine" id="main.c-2" data-line-number="2"></a>
+<a class="sourceLine" id="main.c-3" data-line-number="3"><span class="dt">int</span> id(<span class="dt">int</span> x);</a>
+<a class="sourceLine" id="main.c-4" data-line-number="4"></a>
+<a class="sourceLine" id="main.c-5" data-line-number="5"><span class="dt">int</span> main(<span class="dt">void</span>) {</a>
+<a class="sourceLine" id="main.c-6" data-line-number="6">  printf(<span class="st">&quot;%d</span><span class="sc">\n</span><span class="st">&quot;</span>, id(<span class="dv">42</span>));</a>
+<a class="sourceLine" id="main.c-7" data-line-number="7">}</a></code></pre></div>
 <p>コンパイルは以下のように行います。</p>
-<div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash">$ <span class="fu">clang</span> main.c lib.ll
-$ <span class="ex">./a.out</span>
-<span class="ex">42</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb2-1" data-line-number="1">$ <span class="fu">clang</span> main.c lib.ll</a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">$ <span class="ex">./a.out</span></a>
+<a class="sourceLine" id="cb2-3" data-line-number="3"><span class="ex">42</span></a></code></pre></div>
 <h2 id="絶対値関数">絶対値関数</h2>
 <p>絶対値関数をCで書くと以下のようになります。</p>
-<div class="sourceCode"><pre class="sourceCode c"><code class="sourceCode c"><span class="dt">int</span> abs(<span class="dt">int</span> x) {
-  <span class="cf">if</span> (x &lt; <span class="dv">0</span>) {
-    <span class="cf">return</span> -x;
-  } <span class="cf">else</span> {
-    <span class="cf">return</span> x;
-  }
-}</code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode c"><code class="sourceCode c"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="dt">int</span> abs(<span class="dt">int</span> x) {</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">  <span class="cf">if</span> (x &lt; <span class="dv">0</span>) {</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">    <span class="cf">return</span> -x;</a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">  } <span class="cf">else</span> {</a>
+<a class="sourceLine" id="cb3-5" data-line-number="5">    <span class="cf">return</span> x;</a>
+<a class="sourceLine" id="cb3-6" data-line-number="6">  }</a>
+<a class="sourceLine" id="cb3-7" data-line-number="7">}</a></code></pre></div>
 <p>これをLLVM IRで書くと以下のようになります。</p>
-<div class="sourceCode"><pre class="sourceCode llvm"><code class="sourceCode llvm"><span class="kw">define</span> <span class="dt">i32</span> <span class="fu">@abs</span>(<span class="dt">i32</span>) {
-<span class="fu">entry:</span>
-  <span class="fu">%cond</span> = <span class="kw">icmp</span> <span class="kw">slt</span> <span class="dt">i32</span> <span class="fu">%0</span>, <span class="dv">0</span>
-  <span class="fu">%result</span> = <span class="kw">alloca</span> <span class="dt">i32</span>
-
-  <span class="kw">br</span> <span class="dt">i1</span> <span class="fu">%cond</span>, <span class="dt">label</span> <span class="fu">%then</span>, <span class="dt">label</span> <span class="fu">%else</span>
-
-<span class="fu">then:</span>
-  <span class="fu">%1</span> = <span class="kw">sub</span> <span class="dt">i32</span> <span class="dv">0</span>, <span class="fu">%0</span>
-  <span class="kw">store</span> <span class="dt">i32</span> <span class="fu">%1</span>, <span class="dt">i32</span>* <span class="fu">%result</span>
-  <span class="kw">br</span> <span class="dt">label</span> <span class="fu">%end</span>
-
-<span class="fu">else:</span>
-  <span class="kw">store</span> <span class="dt">i32</span> <span class="fu">%0</span>, <span class="dt">i32</span>* <span class="fu">%result</span>
-  <span class="kw">br</span> <span class="dt">label</span> <span class="fu">%end</span>
-
-<span class="fu">end:</span>
-  <span class="fu">%2</span> = <span class="kw">load</span> <span class="dt">i32</span>, <span class="dt">i32</span>* <span class="fu">%result</span>
-  <span class="kw">ret</span> <span class="dt">i32</span> <span class="fu">%2</span>
-}</code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode llvm"><code class="sourceCode llvm"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="kw">define</span> <span class="dt">i32</span> <span class="fu">@abs</span>(<span class="dt">i32</span>) {</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2"><span class="fu">entry:</span></a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">  <span class="fu">%cond</span> = <span class="kw">icmp</span> <span class="kw">slt</span> <span class="dt">i32</span> <span class="fu">%0</span>, <span class="dv">0</span></a>
+<a class="sourceLine" id="cb4-4" data-line-number="4">  <span class="fu">%result</span> = <span class="kw">alloca</span> <span class="dt">i32</span></a>
+<a class="sourceLine" id="cb4-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb4-6" data-line-number="6">  <span class="kw">br</span> <span class="dt">i1</span> <span class="fu">%cond</span>, <span class="dt">label</span> <span class="fu">%then</span>, <span class="dt">label</span> <span class="fu">%else</span></a>
+<a class="sourceLine" id="cb4-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb4-8" data-line-number="8"><span class="fu">then:</span></a>
+<a class="sourceLine" id="cb4-9" data-line-number="9">  <span class="fu">%1</span> = <span class="kw">sub</span> <span class="dt">i32</span> <span class="dv">0</span>, <span class="fu">%0</span></a>
+<a class="sourceLine" id="cb4-10" data-line-number="10">  <span class="kw">store</span> <span class="dt">i32</span> <span class="fu">%1</span>, <span class="dt">i32</span>* <span class="fu">%result</span></a>
+<a class="sourceLine" id="cb4-11" data-line-number="11">  <span class="kw">br</span> <span class="dt">label</span> <span class="fu">%end</span></a>
+<a class="sourceLine" id="cb4-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb4-13" data-line-number="13"><span class="fu">else:</span></a>
+<a class="sourceLine" id="cb4-14" data-line-number="14">  <span class="kw">store</span> <span class="dt">i32</span> <span class="fu">%0</span>, <span class="dt">i32</span>* <span class="fu">%result</span></a>
+<a class="sourceLine" id="cb4-15" data-line-number="15">  <span class="kw">br</span> <span class="dt">label</span> <span class="fu">%end</span></a>
+<a class="sourceLine" id="cb4-16" data-line-number="16"></a>
+<a class="sourceLine" id="cb4-17" data-line-number="17"><span class="fu">end:</span></a>
+<a class="sourceLine" id="cb4-18" data-line-number="18">  <span class="fu">%2</span> = <span class="kw">load</span> <span class="dt">i32</span>, <span class="dt">i32</span>* <span class="fu">%result</span></a>
+<a class="sourceLine" id="cb4-19" data-line-number="19">  <span class="kw">ret</span> <span class="dt">i32</span> <span class="fu">%2</span></a>
+<a class="sourceLine" id="cb4-20" data-line-number="20">}</a></code></pre></div>
 <p>1つずつ追っていきましょう。</p>
 <p>まず最初の<code class="sourceCode llvm"><span class="fu">entry:</span></code>です。 これはラベルと呼ばれ、条件分岐やループの際のジャンプ先として使います。<br> 関数の最初にラベルを書かなかった場合、暗黙的に無名のラベルが挿入されます。 例えば、引数が2つの関数の場合、<code class="sourceCode llvm"><span class="fu">%0</span></code>, <code class="sourceCode llvm"><span class="fu">%1</span></code>が引数に使われ、<code class="sourceCode llvm"><span class="fu">%2</span></code>がこの無名のラベルに使われます。</p>
 <p>次に、<code class="sourceCode llvm"><span class="fu">%cond</span> = <span class="kw">icmp</span> <span class="kw">slt</span> <span class="dt">i32</span> <span class="fu">%0</span>, <span class="dv">0</span></code>です。<br> <code class="sourceCode llvm"><span class="kw">icmp</span></code>は整数比較を行う命令です。<code class="sourceCode llvm"><span class="kw">slt</span></code>は比較条件を表します。 以下に比較条件の一覧を示します。</p>
-<ol style="list-style-type: decimal">
+<ol type="1">
 <li>eq: 等値</li>
 <li>ne: 等値でない</li>
 <li>ugt: 符号なし整数の’&gt;’</li>
@@ -104,45 +104,45 @@ $ <span class="ex">./a.out</span>
 <p><code class="sourceCode llvm"><span class="fu">end:</span></code>では、<code class="sourceCode llvm"><span class="fu">%2</span> = <span class="kw">load</span> <span class="dt">i32</span>, <span class="dt">i32</span>* <span class="fu">%result</span></code>で<code class="sourceCode llvm"><span class="fu">%result</span></code>から返り値を取得しています。</p>
 <p>abs関数をlib.llに追記して、実際に使ってみましょう。</p>
 <p>lib.llの全体を以下に示します。</p>
-<div class="sourceCode" id="lib.ll"><pre class="sourceCode llvm"><code class="sourceCode llvm"><span class="kw">define</span> <span class="dt">i32</span> <span class="fu">@id</span>(<span class="dt">i32</span>) {
-  <span class="kw">ret</span> <span class="dt">i32</span> <span class="fu">%0</span>
-}
-
-<span class="kw">define</span> <span class="dt">i32</span> <span class="fu">@abs</span>(<span class="dt">i32</span>) {
-<span class="fu">entry:</span>
-  <span class="fu">%cond</span> = <span class="kw">icmp</span> <span class="kw">slt</span> <span class="dt">i32</span> <span class="fu">%0</span>, <span class="dv">0</span>
-  <span class="fu">%result</span> = <span class="kw">alloca</span> <span class="dt">i32</span>
-
-  <span class="kw">br</span> <span class="dt">i1</span> <span class="fu">%cond</span>, <span class="dt">label</span> <span class="fu">%then</span>, <span class="dt">label</span> <span class="fu">%else</span>
-
-<span class="fu">then:</span>
-  <span class="fu">%1</span> = <span class="kw">sub</span> <span class="dt">i32</span> <span class="dv">0</span>, <span class="fu">%0</span>
-  <span class="kw">store</span> <span class="dt">i32</span> <span class="fu">%1</span>, <span class="dt">i32</span>* <span class="fu">%result</span>
-  <span class="kw">br</span> <span class="dt">label</span> <span class="fu">%end</span>
-
-<span class="fu">else:</span>
-  <span class="kw">store</span> <span class="dt">i32</span> <span class="fu">%0</span>, <span class="dt">i32</span>* <span class="fu">%result</span>
-  <span class="kw">br</span> <span class="dt">label</span> <span class="fu">%end</span>
-
-<span class="fu">end:</span>
-  <span class="fu">%2</span> = <span class="kw">load</span> <span class="dt">i32</span>, <span class="dt">i32</span>* <span class="fu">%result</span>
-  <span class="kw">ret</span> <span class="dt">i32</span> <span class="fu">%2</span>
-}</code></pre></div>
+<div class="sourceCode" id="lib.ll"><pre class="sourceCode llvm"><code class="sourceCode llvm"><a class="sourceLine" id="lib.ll-1" data-line-number="1"><span class="kw">define</span> <span class="dt">i32</span> <span class="fu">@id</span>(<span class="dt">i32</span>) {</a>
+<a class="sourceLine" id="lib.ll-2" data-line-number="2">  <span class="kw">ret</span> <span class="dt">i32</span> <span class="fu">%0</span></a>
+<a class="sourceLine" id="lib.ll-3" data-line-number="3">}</a>
+<a class="sourceLine" id="lib.ll-4" data-line-number="4"></a>
+<a class="sourceLine" id="lib.ll-5" data-line-number="5"><span class="kw">define</span> <span class="dt">i32</span> <span class="fu">@abs</span>(<span class="dt">i32</span>) {</a>
+<a class="sourceLine" id="lib.ll-6" data-line-number="6"><span class="fu">entry:</span></a>
+<a class="sourceLine" id="lib.ll-7" data-line-number="7">  <span class="fu">%cond</span> = <span class="kw">icmp</span> <span class="kw">slt</span> <span class="dt">i32</span> <span class="fu">%0</span>, <span class="dv">0</span></a>
+<a class="sourceLine" id="lib.ll-8" data-line-number="8">  <span class="fu">%result</span> = <span class="kw">alloca</span> <span class="dt">i32</span></a>
+<a class="sourceLine" id="lib.ll-9" data-line-number="9"></a>
+<a class="sourceLine" id="lib.ll-10" data-line-number="10">  <span class="kw">br</span> <span class="dt">i1</span> <span class="fu">%cond</span>, <span class="dt">label</span> <span class="fu">%then</span>, <span class="dt">label</span> <span class="fu">%else</span></a>
+<a class="sourceLine" id="lib.ll-11" data-line-number="11"></a>
+<a class="sourceLine" id="lib.ll-12" data-line-number="12"><span class="fu">then:</span></a>
+<a class="sourceLine" id="lib.ll-13" data-line-number="13">  <span class="fu">%1</span> = <span class="kw">sub</span> <span class="dt">i32</span> <span class="dv">0</span>, <span class="fu">%0</span></a>
+<a class="sourceLine" id="lib.ll-14" data-line-number="14">  <span class="kw">store</span> <span class="dt">i32</span> <span class="fu">%1</span>, <span class="dt">i32</span>* <span class="fu">%result</span></a>
+<a class="sourceLine" id="lib.ll-15" data-line-number="15">  <span class="kw">br</span> <span class="dt">label</span> <span class="fu">%end</span></a>
+<a class="sourceLine" id="lib.ll-16" data-line-number="16"></a>
+<a class="sourceLine" id="lib.ll-17" data-line-number="17"><span class="fu">else:</span></a>
+<a class="sourceLine" id="lib.ll-18" data-line-number="18">  <span class="kw">store</span> <span class="dt">i32</span> <span class="fu">%0</span>, <span class="dt">i32</span>* <span class="fu">%result</span></a>
+<a class="sourceLine" id="lib.ll-19" data-line-number="19">  <span class="kw">br</span> <span class="dt">label</span> <span class="fu">%end</span></a>
+<a class="sourceLine" id="lib.ll-20" data-line-number="20"></a>
+<a class="sourceLine" id="lib.ll-21" data-line-number="21"><span class="fu">end:</span></a>
+<a class="sourceLine" id="lib.ll-22" data-line-number="22">  <span class="fu">%2</span> = <span class="kw">load</span> <span class="dt">i32</span>, <span class="dt">i32</span>* <span class="fu">%result</span></a>
+<a class="sourceLine" id="lib.ll-23" data-line-number="23">  <span class="kw">ret</span> <span class="dt">i32</span> <span class="fu">%2</span></a>
+<a class="sourceLine" id="lib.ll-24" data-line-number="24">}</a></code></pre></div>
 <p>main.cの全体を以下に示します。</p>
-<div class="sourceCode" id="main.c"><pre class="sourceCode c"><code class="sourceCode c"><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span>
-
-<span class="dt">int</span> id(<span class="dt">int</span> x);
-<span class="dt">int</span> abs(<span class="dt">int</span> x);
-
-<span class="dt">int</span> main(<span class="dt">void</span>) {
-  printf(<span class="st">&quot;%d</span><span class="sc">\n</span><span class="st">&quot;</span>, id(<span class="dv">42</span>));
-  printf(<span class="st">&quot;%d</span><span class="sc">\n</span><span class="st">&quot;</span>, abs(-<span class="dv">42</span>));
-}</code></pre></div>
+<div class="sourceCode" id="main.c"><pre class="sourceCode c"><code class="sourceCode c"><a class="sourceLine" id="main.c-1" data-line-number="1"><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></a>
+<a class="sourceLine" id="main.c-2" data-line-number="2"></a>
+<a class="sourceLine" id="main.c-3" data-line-number="3"><span class="dt">int</span> id(<span class="dt">int</span> x);</a>
+<a class="sourceLine" id="main.c-4" data-line-number="4"><span class="dt">int</span> abs(<span class="dt">int</span> x);</a>
+<a class="sourceLine" id="main.c-5" data-line-number="5"></a>
+<a class="sourceLine" id="main.c-6" data-line-number="6"><span class="dt">int</span> main(<span class="dt">void</span>) {</a>
+<a class="sourceLine" id="main.c-7" data-line-number="7">  printf(<span class="st">&quot;%d</span><span class="sc">\n</span><span class="st">&quot;</span>, id(<span class="dv">42</span>));</a>
+<a class="sourceLine" id="main.c-8" data-line-number="8">  printf(<span class="st">&quot;%d</span><span class="sc">\n</span><span class="st">&quot;</span>, abs(-<span class="dv">42</span>));</a>
+<a class="sourceLine" id="main.c-9" data-line-number="9">}</a></code></pre></div>
 <p>実行結果は以下のようになります。</p>
-<div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash">$ <span class="fu">clang</span> main.c lib.ll
-$ <span class="ex">./a.out</span>
-<span class="ex">42</span>
-<span class="ex">42</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb5-1" data-line-number="1">$ <span class="fu">clang</span> main.c lib.ll</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">$ <span class="ex">./a.out</span></a>
+<a class="sourceLine" id="cb5-3" data-line-number="3"><span class="ex">42</span></a>
+<a class="sourceLine" id="cb5-4" data-line-number="4"><span class="ex">42</span></a></code></pre></div>
 
         </div>
         <div id="footer">
